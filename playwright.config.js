@@ -22,7 +22,7 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://localhost:3000',
 
-    browserName: "webkit",
-    headless: true, // If headless is false or no such property and you want to run in headed mode, you need to add --headed flag in the command line during execution
+    browserName: "chromium",
+    headless: false, // If headless is true or no such property and you want to run in headed mode, you need to add --headed flag in the command line during execution
   },
 });
