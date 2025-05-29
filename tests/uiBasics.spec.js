@@ -37,6 +37,23 @@ test("should login with valid login credentials", async ({ page }) => {
   await page.goto("https://rahulshettyacademy.com/loginpagePractise/");
   await page.locator("#username").fill("rahulshettyacademy");
   await page.locator("[name='password']").fill("learning");
+
+  // Select option from dropdown if the tag of the dropdown is select
+  await page.locator("select.form-control").selectOption("student");
+
+  // action is a method which is used to perform actions on the page
+  await page.locator("input[type='checkbox']").check();
+  await expect(page.locator("input[type='checkbox']")).toBeChecked(); // inside expect we have passed locator and actual action is done outside expect by using .toBeChecked()
+
+  expect(
+    await page.locator("input[type='checkbox']").isChecked()
+  ).toBeChecked(); // but here we have used isChecked() method to check whether the checkbox is checked or not that is why await is inside the expect but not outside
+
+  expect(page.locator("[href*='documents-request']")).toHaveAttribute(
+    "class",
+    "blinkingText"
+  );
+
   await page.locator("#signInBtn").click();
 
   // This .first() is to get the first item
