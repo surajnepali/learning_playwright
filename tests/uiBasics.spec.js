@@ -34,6 +34,21 @@ test("This is the playwright test for test login with invalid credentials", asyn
 });
 
 test("should login with valid login credentials", async ({ page }) => {
+  /**
+   * In order to debug the code using Playwright Inspector
+   * We can enter the following command in the terminal
+   * npx playwright test test/filename.spec.js --debug
+   * Upon running this command, Playwright Inspector will open along with browser
+   * Then we can debug the code
+   */
+
+  /**
+   * We can just record and playback the automation using codegen
+   * In order to do that, we can enter the following command in the terminal
+   * npx playwright codegen https://google.com
+   * Upon running this command, it will open a browser and a Playwright Inspector
+   * It will generate code and record on our every action in the website
+   */
   await page.goto("https://rahulshettyacademy.com/loginpagePractise/");
   await page.locator("#username").fill("rahulshettyacademy");
   await page.locator("[name='password']").fill("learning");
@@ -103,7 +118,7 @@ test("Test without having browser", async ({ page }) => {
   await expect(page).toHaveTitle("Google");
 });
 
-test.only("Handling Child Windows and Tabs", async ({ browser }) => {
+test("Handling Child Windows and Tabs", async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const documentLink = page.locator("[href*='documents-request']");
@@ -132,4 +147,35 @@ test.only("Handling Child Windows and Tabs", async ({ browser }) => {
   console.log("Extracted text is: " + text);
 
   // To come from newPage to page, you do not need to do anything, just use page
+});
+
+test.only("Full Checkout Process", async ({ page }) => {
+  await page.goto("https://rahulshettyacademy.com/client/");
+
+  // Login From the Login page
+  const loginEmail = "automationtesting7896@gmail.com";
+  const emailField = page.locator("#userEmail");
+  const passwordField = page.locator("#userPassword");
+  const loginButton = page.locator("#login");
+
+  await emailField.fill(loginEmail);
+  await passwordField.fill("R@hul123");
+  await loginButton.click();
+
+  // Add a product from dashboard dynamically
+  const productsContainer = page.locator("section#products");
+  const product = page.locator(".card");
+
+  await productsContainer.locator(".card").first().waitFor();
+  const products = await productsContainer.locator(".card").all();
+  for (const product of products) {
+    const productNameText = await product.locator("h5 b").textContent();
+    if (productNameText === "ADIDAS ORIGINAL") {
+      await product.locator(".fa-shopping-cart").click();
+      await expect(page.locator("#toast-container")).toHaveText(
+        "Product Added To Cart"
+      );
+      break;
+    }
+  }
 });

@@ -18,11 +18,14 @@ export default defineConfig({
   expect: {
     timeout: 10 * 1000, // this timeout is exclusively for assertion validations
   },
+  reporter: "html",
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://localhost:3000',
 
     browserName: "chromium",
     headless: false, // If headless is true or no such property and you want to run in headed mode, you need to add --headed flag in the command line during execution
+    screenshot: "on",
+    trace: "retain-on-failure",
   },
 });
