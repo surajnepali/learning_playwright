@@ -75,7 +75,7 @@ test("should login with valid login credentials", async ({ page }) => {
   console.log(allItems);
 });
 
-test.only("should verify all text contents without having call to first and second items", async ({
+test("should verify all text contents without having call to first and second items", async ({
   page,
 }) => {
   await page.goto("https://rahulshettyacademy.com/loginpagePractise/");
@@ -101,4 +101,35 @@ test("Test without having browser", async ({ page }) => {
   console.log(await page.title());
   //   expect(await page.title()).toBe("Google");
   await expect(page).toHaveTitle("Google");
+});
+
+test.only("Handling Child Windows and Tabs", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const documentLink = page.locator("[href*='documents-request']");
+  await page.goto("https://rahulshettyacademy.com/loginpagePractise/");
+  // context.waitForEvent("page"); // This method is called before clicking the document link because it has to listen before the action is made to open the link
+  // await documentLink.click();
+
+  /*Basically Promise has three states: Pending, Fulfilled and Rejected
+   *When an element is found and the code is searching for it then its Pending
+   * When an element is found and the code is searching for it then its Fulfilled
+   * When an element is not found after a certain time then its Rejected
+   */
+
+  /**
+   * Promise.all is used to execute multiple promises at the same time
+   * It will come out of this array only after all the promises are resolved
+   * If one of the promises is rejected, the promise will be rejected/failed
+   * The expectation of this array is that it has to return fulfilled promises into an index
+   */
+  const [newPage] = await Promise.all([
+    context.waitForEvent("page"), // It returns a new page
+    documentLink.click(), // It doesnot return anything, its just a click action
+  ]);
+
+  const text = await newPage.locator(".red").textContent();
+  console.log("Extracted text is: " + text);
+
+  // To come from newPage to page, you do not need to do anything, just use page
 });
