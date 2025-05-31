@@ -157,25 +157,130 @@ test.only("Full Checkout Process", async ({ page }) => {
   const emailField = page.locator("#userEmail");
   const passwordField = page.locator("#userPassword");
   const loginButton = page.locator("#login");
+  const productToCheckout = "ADIDAS ORIGINAL";
 
   await emailField.fill(loginEmail);
   await passwordField.fill("R@hul123");
   await loginButton.click();
 
-  // Add a product from dashboard dynamically
+  // Add a product from dashboard dynamically using the product name you want to add
   const productsContainer = page.locator("section#products");
-  const product = page.locator(".card");
 
   await productsContainer.locator(".card").first().waitFor();
   const products = await productsContainer.locator(".card").all();
   for (const product of products) {
     const productNameText = await product.locator("h5 b").textContent();
-    if (productNameText === "ADIDAS ORIGINAL") {
-      await product.locator(".fa-shopping-cart").click();
+    if (productNameText === productToCheckout) {
+      await product.locator("text= Add To Cart").click();
       await expect(page.locator("#toast-container")).toHaveText(
         "Product Added To Cart"
       );
       break;
     }
   }
+
+  // After successfully clicking Add to cart button, click Cart button from Navbar
+  const cartButton = page.locator("button[routerlink='/dashboard/cart']");
+  await cartButton.click();
+
+  // Verify that right product is added in the cart and click Checkout button
+  const productsInCart = page.locator("div.cart").locator("li");
+  await productsInCart.first().waitFor();
+  const firstProductInCartName = await productsInCart
+    .nth(0)
+    .locator("h3")
+    .textContent();
+  expect(firstProductInCartName).toBe(productToCheckout);
+
+  // Click Checkout button
+  await page.locator("div.subtotal button").click();
+
+  // In the Checkout page, verify the right product is available
+  const productInCheckout = await page
+    .locator("div.details__item")
+    .locator("div.item__title")
+    .textContent();
+  expect(productInCheckout.trim()).toBe(productToCheckout);
+
+  // Fill the Credit Card fields in the Personal Information Container
+  const rowsInPersonalInfoContainer = page
+    .locator("div.form__cc")
+    .locator("div.row");
+  await rowsInPersonalInfoContainer.nth(1).locator("input").fill("666");
+  await rowsInPersonalInfoContainer
+    .nth(2)
+    .locator("input")
+    .fill("Rohit Shetty");
+  await page
+    .locator("div.form__cc")
+    .locator("input[name='coupon']")
+    .fill("rahulshettyacademy");
+  // await page.locator("div.form__cc").locator("button[type='submit']").click();
+
+  // const appliedCouponTextSelector = page.locator("div.form__cc").locator("p");
+  // await appliedCouponTextSelector.first().waitFor();
+  // expect(await appliedCouponTextSelector.textContent().trim()).toBe(
+  //   "Coupon Applied"
+  // );
+
+  const myCountry = "Nep";
+  await page
+    .locator("input[placeholder='Select Country']")
+    .pressSequentially(myCountry);
+  const dropdown = page.locator(".ta-results");
+  await dropdown.waitFor();
+  const optionCount = await dropdown.locator("button").count();
+  for (let i = 0; i < optionCount; i++) {
+    const text = await dropdown.locator("button").nth(i).textContent();
+    if (text.trim() === "Nepal") {
+      await dropdown.locator("button").nth(i).click();
+      break;
+    }
+  }
+
+  // Verify that an email field of Shipping Information container contains the logged in user email
+  await expect(page.locator("div.user__name input.ng-valid")).toHaveValue(
+    loginEmail
+  );
+
+  // Click PLACE ORDER button
+  const placeOrderButton = page.locator("div.actions a");
+  await placeOrderButton.click();
+
+  const orderConfirmationContainer = page.locator("table#htmlData");
+  await orderConfirmationContainer.waitFor();
+
+  const thankYouText = await orderConfirmationContainer
+    .locator("h1.hero-primary")
+    .textContent();
+  expect(thankYouText).toBe(" Thankyou for the order. ");
+  const orderId = await orderConfirmationContainer
+    .locator("label.ng-star-inserted")
+    .textContent();
+  const orderHistoryPage = orderConfirmationContainer.locator(
+    '[routerlink="/dashboard/myorders"]'
+  );
+  await orderHistoryPage.click();
+
+  const table = page.locator(".table");
+  await table.waitFor();
+  const rowsCount = await table.locator("tbody").locator("tr").count();
+  for (let i = 0; i < rowsCount; i++) {
+    const row = table.locator("tbody").locator("tr").nth(i);
+    const expectedColumnId = await row.locator("th").textContent();
+    if (
+      expectedColumnId.trim() === orderId.split("| ")[1].split(" |")[0].trim()
+    ) {
+      const expectedProductName = await row.locator("td").nth(1).textContent();
+      expect(expectedProductName.trim()).toBe(productToCheckout);
+      const viewButton = row.locator(".btn-primary");
+      await viewButton.click();
+      break;
+    }
+  }
+
+  const orderIdInOrderSummary = await page
+    .locator("div.email-container div.col-text.-main")
+    .textContent();
+  expect(orderId.includes(orderIdInOrderSummary.trim())).toBeTruthy();
 });
