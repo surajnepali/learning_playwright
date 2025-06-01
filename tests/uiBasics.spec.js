@@ -317,3 +317,111 @@ test("Playwright Special Locators", async ({ page }) => {
    * 2. <label for="userEmail"> label_name </label>  <input id="email">
    */
 });
+
+test("Full Checkout Process using Playwright Special Locators", async ({
+  page,
+}) => {
+  await page.goto("https://rahulshettyacademy.com/client/");
+
+  // Login From the Login page
+  const loginEmail = "automationtesting7896@gmail.com";
+  const emailField = page.getByPlaceholder("email@example.com");
+  const passwordField = page.getByPlaceholder("enter your passsword");
+  const loginButton = page.getByRole("button", { name: "Login" });
+  const productToCheckout = "ADIDAS ORIGINAL";
+
+  await emailField.fill(loginEmail);
+  await passwordField.fill("R@hul123");
+  await loginButton.click();
+
+  // Add a product from dashboard dynamically using the product name you want to add
+  const productsContainer = page.locator("section#products");
+
+  await productsContainer.locator(".card").first().waitFor();
+  await productsContainer
+    .locator(".card")
+    .filter({ hasText: productToCheckout })
+    .getByRole("button", { name: "Add To Cart" })
+    .click();
+
+  // After successfully clicking Add to cart button, click Cart button from Navbar
+  await page
+    .getByRole("listitem")
+    .getByRole("button", { name: "Cart" })
+    .click();
+
+  // Verify that right product is added in the cart and click Checkout button
+  const productsInCart = page.locator("div.cart").locator("li");
+  await productsInCart.first().waitFor();
+  await expect(page.getByText(productToCheckout)).toBeVisible();
+
+  // Click Checkout button
+  await page.getByRole("button", { name: "Checkout" }).click();
+
+  // In the Checkout page, verify the right product is available
+  await expect(page.getByText(productToCheckout)).toBeVisible();
+
+  // Fill the Credit Card fields in the Personal Information Container
+  const rowsInPersonalInfoContainer = page
+    .locator("div.form__cc")
+    .locator("div.row");
+  await rowsInPersonalInfoContainer.nth(1).locator("input").fill("666");
+  await rowsInPersonalInfoContainer
+    .nth(2)
+    .locator("input")
+    .fill("Rohit Shetty");
+  await page
+    .locator("div.form__cc")
+    .locator("input[name='coupon']")
+    .fill("rahulshettyacademy");
+
+  const myCountry = "Nep";
+  await page.getByPlaceholder("Select Country").pressSequentially(myCountry);
+  const dropdown = page.locator(".ta-results");
+  await dropdown.waitFor();
+  await dropdown.getByRole("button").filter({ hasText: "Nepal" }).click();
+
+  // Verify that an email field of Shipping Information container contains the logged in user email
+  await expect(page.locator("div.user__name input.ng-valid")).toHaveValue(
+    loginEmail
+  );
+
+  // Click PLACE ORDER button
+  await page.getByText("PLACE ORDER").click();
+
+  const orderConfirmationContainer = page.locator("table#htmlData");
+  await orderConfirmationContainer.waitFor();
+
+  await expect(
+    orderConfirmationContainer.getByText(" Thankyou for the order. ")
+  ).toBeVisible();
+  const orderId = await orderConfirmationContainer
+    .locator("label.ng-star-inserted")
+    .textContent();
+  const orderHistoryPage = orderConfirmationContainer.locator(
+    '[routerlink="/dashboard/myorders"]'
+  );
+  await orderHistoryPage.click();
+
+  const table = page.locator(".table");
+  await table.waitFor();
+  const rowsCount = await table.locator("tbody").locator("tr").count();
+  for (let i = 0; i < rowsCount; i++) {
+    const row = table.locator("tbody").locator("tr").nth(i);
+    const expectedColumnId = await row.locator("th").textContent();
+    if (
+      expectedColumnId.trim() === orderId.split("| ")[1].split(" |")[0].trim()
+    ) {
+      const expectedProductName = await row.locator("td").nth(1).textContent();
+      expect(expectedProductName.trim()).toBe(productToCheckout);
+      const viewButton = row.locator(".btn-primary");
+      await viewButton.click();
+      break;
+    }
+  }
+
+  const orderIdInOrderSummary = await page
+    .locator("div.email-container div.col-text.-main")
+    .textContent();
+  expect(orderId.includes(orderIdInOrderSummary.trim())).toBeTruthy();
+});
