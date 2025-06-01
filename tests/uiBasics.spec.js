@@ -425,3 +425,25 @@ test("Full Checkout Process using Playwright Special Locators", async ({
     .textContent();
   expect(orderId.includes(orderIdInOrderSummary.trim())).toBeTruthy();
 });
+
+test.only("Validate Hidden elements", async ({ page }) => {
+  await page.goto("https://rahulshettyacademy.com/AutomationPractice/");
+
+  // await page.goto("https://google.com");
+  // await page.goBack();
+  // await page.goForward();
+
+  await expect(page.locator("#displayed-text")).toBeVisible();
+  await page.locator("#hide-textbox").click();
+  await expect(page.locator("#displayed-text")).toBeHidden();
+
+  // Handle Confirm popup
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.locator("#confirmbtn").click();
+
+  // Handle Hover buttons
+  await page.locator("#mousehover").hover();
+
+  // Handle Frames
+  const framePage = page.frameLocator("#courses-iframe");
+});
