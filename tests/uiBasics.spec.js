@@ -149,7 +149,7 @@ test("Handling Child Windows and Tabs", async ({ browser }) => {
   // To come from newPage to page, you do not need to do anything, just use page
 });
 
-test.only("Full Checkout Process", async ({ page }) => {
+test("Full Checkout Process", async ({ page }) => {
   await page.goto("https://rahulshettyacademy.com/client/");
 
   // Login From the Login page
@@ -283,4 +283,37 @@ test.only("Full Checkout Process", async ({ page }) => {
     .locator("div.email-container div.col-text.-main")
     .textContent();
   expect(orderId.includes(orderIdInOrderSummary.trim())).toBeTruthy();
+});
+
+test("Playwright Special Locators", async ({ page }) => {
+  await page.goto("https://rahulshettyacademy.com/angularpractice/");
+  await page.getByLabel("Check me out if you Love Icecreams!").click();
+  await page.getByLabel("Employed").check();
+  await page.getByLabel("Gender").selectOption("Male");
+  await page.getByPlaceholder("Password").fill("R@hul123");
+  await page.getByRole("button", { name: "Submit" }).click();
+  await page
+    .getByText("Success! The Form has been submitted successfully!.")
+    .click();
+
+  await page.getByRole("link", { name: "Shop" }).click();
+  await page
+    .locator("app-card")
+    .filter({ hasText: "Nokia Edge" })
+    .getByRole("button")
+    .click();
+
+  // Like Cypress if we want to use Test Runner, we can use the following command
+  // npx playwright test --ui
+
+  // What kind of html code the .getByLabel() works for edit box?
+  /**
+   * It works for:
+   * 1. <label> label_name <input> </label>
+   * 2. <label for="userEmail"> label_name </label> <input id="userEmail">
+   *
+   * But it won't work for:
+   * 1. <label> </label>
+   * 2. <label for="userEmail"> label_name </label>  <input id="email">
+   */
 });
